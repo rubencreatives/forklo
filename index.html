@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forklo — Just the Recipe</title>
+  <meta name="description" content="A free Chrome extension that strips food blogs down to ingredients and instructions. One click, zero noise.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1080'%3E%3Crect fill='%2391253f' width='1080' height='1080'/%3E%3Cpath fill='%23e7ddd3' d='M587.12,211.89c-248.86,0-425.93,132.81-425.93,357.73,0,172.28,128.02,297.91,333.81,297.91,34.45,0,67.4-2.63,98.73-7.61l-41.75-144.54c-1-3.46-3.66-6.19-7.1-7.23-40.88-12.38-87.33-22.93-103.8-65.64-27.01-70.05-49.14-140.1-72.65-213.61-1.11-3.46-.46-7.33,1.92-10.07,11.22-12.91,25.5-23.06,41.79-30.01,5.56-2.37,12,.45,14.13,6.11l59.62,159.05c1.66,4.42,11,10.26,14.69,10.74,4.85.64,11.91-13.96,9.78-19.75l-60.12-163.42c-1.67-4.54-.04-9.58,3.88-12.42,7.84-5.7,18.07-9.6,27.41-10.34,4.79-.38,9.26,2.41,10.94,6.91l61.19,163.75c1.48,3.96,13.2,11.2,16.43,10.06,4.36-1.54,9.71-13.64,7.91-18.6l-58.34-160.75c-2.28-6.28,1.72-13.08,8.32-14.14l44.46-7.15c4.86-.78,9.62,1.87,11.51,6.42l75.79,182.04c21.71,52.15,14.71,101.7-25.86,146.4-2.92,3.22-3.74,7.82-1.9,11.76l67.79,145.84c135.48-54.01,219.96-166.37,219.96-322.74,0-172.29-126.82-296.72-332.61-296.72Z'/%3E%3C/svg%3E">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --wine: #91253f;
+      --dark: #424242;
+      --medium: #76685F;
+      --muted: #BAA69C;
+      --cream: #E7DDD3;
+      --bg: #f4f1eb;
+      --white: #ffffff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      color: var(--dark);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ─── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 40px; z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(231,221,211,0.5);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .nav-brand-name {
+      font-family: Georgia, serif;
+      font-size: 20px; font-weight: 700; color: var(--wine);
+    }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a {
+      font-size: 14px; font-weight: 500; color: var(--medium);
+      text-decoration: none; transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--dark); }
+    .nav-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; background: var(--wine); color: var(--cream) !important;
+      border-radius: 10px; font-weight: 600 !important; transition: background 0.15s !important;
+    }
+    .nav-cta:hover { background: #7d2038 !important; color: var(--cream) !important; }
+
+    /* ── Hero ─── */
+    .hero {
+      padding: 140px 40px 80px;
+      text-align: center;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--white) 100%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; background: rgba(145,37,63,0.06);
+      border: 1px solid rgba(145,37,63,0.12);
+      border-radius: 20px; font-size: 13px; font-weight: 600;
+      color: var(--wine); margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-family: Georgia, serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 700; line-height: 1.15;
+      color: var(--dark); max-width: 700px; margin: 0 auto 20px;
+    }
+    .hero h1 span { color: var(--wine); }
+    .hero p {
+      font-size: 18px; line-height: 1.7;
+      color: var(--medium); max-width: 520px; margin: 0 auto 36px;
+    }
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 32px;
+      background: var(--wine); color: var(--cream);
+      font-family: inherit; font-size: 16px; font-weight: 600;
+      border: none; border-radius: 12px; cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .hero-cta:hover { background: #7d2038; transform: translateY(-1px); }
+    .hero-cta svg { flex-shrink: 0; }
+    .hero-sub {
+      margin-top: 14px; font-size: 13px; color: var(--muted);
+    }
+
+    /* ── Screenshot showcase ─── */
+    .showcase {
+      padding: 0 40px 80px;
+      max-width: 960px; margin: 0 auto;
+    }
+    .showcase-frame {
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06);
+      border: 1px solid rgba(231,221,211,0.6);
+      background: var(--bg);
+    }
+    .showcase-frame img {
+      display: block; width: 100%;
+    }
+    .showcase-placeholder {
+      display: flex; align-items: center; justify-content: center;
+      height: 480px; color: var(--muted); font-size: 15px;
+      font-style: italic;
+    }
+
+    /* ── Features ─── */
+    .features {
+      padding: 80px 40px;
+      background: var(--white);
+    }
+    .features-inner {
+      max-width: 960px; margin: 0 auto;
+    }
+    .features-header {
+      text-align: center; margin-bottom: 56px;
+    }
+    .features-header h2 {
+      font-family: Georgia, serif;
+      font-size: 32px; font-weight: 700; color: var(--dark); margin-bottom: 12px;
+    }
+    .features-header p {
+      font-size: 16px; color: var(--medium); max-width: 480px; margin: 0 auto;
+    }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 32px;
+    }
+    .feature-card {
+      padding: 28px;
+      background: var(--bg);
+      border-radius: 14px;
+      border: 1px solid rgba(231,221,211,0.4);
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(145,37,63,0.08);
+      border-radius: 10px; color: var(--wine);
+      margin-bottom: 16px;
+    }
+    .feature-card h3 {
+      font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: 14px; line-height: 1.65; color: var(--medium);
+    }
+
+    /* ── How it works ─── */
+    .how-it-works {
+      padding: 80px 40px;
+      background: var(--bg);
+    }
+    .how-inner {
+      max-width: 760px; margin: 0 auto; text-align: center;
+    }
+    .how-inner h2 {
+      font-family: Georgia, serif;
+      font-size: 32px; font-weight: 700; color: var(--dark); margin-bottom: 48px;
+    }
+    .how-steps {
+      display: flex; gap: 40px; text-align: center;
+    }
+    .how-step { flex: 1; }
+    .how-step-num {
+      width: 40px; height: 40px; margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--wine); color: var(--cream);
+      border-radius: 50%; font-size: 16px; font-weight: 700;
+    }
+    .how-step h3 {
+      font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 8px;
+    }
+    .how-step p {
+      font-size: 14px; line-height: 1.6; color: var(--medium);
+    }
+
+    /* ── CTA section ─── */
+    .cta-section {
+      padding: 80px 40px;
+      text-align: center;
+    }
+    .cta-section h2 {
+      font-family: Georgia, serif;
+      font-size: 28px; font-weight: 700; color: var(--dark); margin-bottom: 16px;
+    }
+    .cta-section p {
+      font-size: 16px; color: var(--medium); margin-bottom: 28px;
+    }
+
+    /* ── Footer ─── */
+    .footer {
+      padding: 32px 40px;
+      border-top: 1px solid var(--cream);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 13px; color: var(--muted);
+    }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      color: var(--medium); text-decoration: none; transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--dark); }
+
+    /* ── Responsive ─── */
+    @media (max-width: 768px) {
+      .nav { padding: 14px 20px; }
+      .nav-links a:not(.nav-cta) { display: none; }
+      .hero { padding: 120px 20px 60px; }
+      .features, .how-it-works, .cta-section { padding: 60px 20px; }
+      .showcase { padding: 0 20px 60px; }
+      .how-steps { flex-direction: column; gap: 28px; }
+      .footer { flex-direction: column; gap: 16px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <svg viewBox="0 0 645.71 140.58" height="28" fill="#91253f">
+        <path d="M91.99,15.54l-9.82,55.91,33.94-31.08h.36l-11.25,63.95h-.36l-23.04-31.08-6.97,39.65c-2.5,13.93,1.07,21.43,5.18,25.19v.36H0v-.36c4.64-3.75,9.82-11.25,12.32-25.19l13.04-73.95c2.5-13.93-.18-21.43-3.39-25.19v-.36h123.43l-3.57,54.12h-.36L95.2,15.54h-3.21Z"/>
+        <path d="M343.84,42.51c3.93,0,8.04.71,12.68,2.32l-8.57,49.12c-12.76-5.24-33.9-5.87-43,.3l-7.54,43.82-51.98,1.79,13.58-77.7c.89-5.18.89-8.57-4.82-8.93v-.36c10.54-5,22.68-8.4,35.54-8.4,14.29,0,23.04,2.86,20.36,16.61l-5.36,28.22h.68l.21-1.07c6.61-26.97,18.22-45.73,38.23-45.73h0Z"/>
+        <path d="M407.77,84.55l-.08.42c7.19-4.29,24.25-11.38,36.35-11.38,13.58,0,19.11,6.97,19.65,24.83l.71,27.69c0,3.93,1.43,5.18,5.18,5.36v.36c-4.47,3.93-17.68,8.75-35.72,8.75-26.97,0-27.33-13.75-26.79-33.22l.52-21.84-9.28,52.57-51.98,1.79,21.43-122.18c.89-5.18.89-8.57-4.82-8.93v-.36c10.54-5,22.68-8.4,35.54-8.4,14.29,0,23.94,2.86,20.72,20.01l-11.68,61.88,29.99-18.12-20.99-18.58v-.36h56.44v.36l-65.22,39.36Z"/>
+        <path d="M527.29,131.46v.89c-10.54,5.72-22.51,7.86-35.19,7.86-14.29,0-23.76-3.93-20.72-21.08l18.04-102.53c.89-5.18.71-7.5-4.82-7.86l-.18-.89C494.96,2.86,506.92,0,519.78,0c14.29,0,23.76,3.93,20.72,21.08l-18.04,102.53c-1.07,5.18-.71,7.5,4.82,7.86Z"/>
+        <path d="M532.47,96.1c0-33.58,26.44-53.41,63.59-53.41,30.72,0,49.66,18.58,49.66,44.3,0,33.58-26.08,53.59-63.41,53.59-30.72,0-49.83-18.76-49.83-44.48ZM592.66,92.35c-5.54-37.33-8.22-45.9-10.72-45.19-2.5.71-1.96,8.22,3.57,43.76,5.54,37.33,8.4,45.91,10.72,45.19,2.5-.71,1.61-10-3.57-43.76Z"/>
+        <path d="M199.34,42.69c-37.15,0-63.59,19.83-63.59,53.41,0,25.72,19.11,44.48,49.83,44.48,5.14,0,10.06-.39,14.74-1.14l-6.23-21.58c-.15-.52-.55-.92-1.06-1.08-6.1-1.85-13.04-3.42-15.5-9.8-4.03-10.46-7.34-20.92-10.85-31.89-.17-.52-.07-1.09.29-1.5,1.67-1.93,3.81-3.44,6.24-4.48.83-.35,1.79.07,2.11.91l8.9,23.75c.25.66,1.64,1.53,2.19,1.6.72.1,1.78-2.08,1.46-2.95l-8.98-24.4c-.25-.68,0-1.43.58-1.85,1.17-.85,2.7-1.43,4.09-1.54.72-.06,1.38.36,1.63,1.03l9.14,24.45c.22.59,1.97,1.67,2.45,1.5.65-.23,1.45-2.04,1.18-2.78l-8.71-24c-.34-.94.26-1.95,1.24-2.11l6.64-1.07c.73-.12,1.44.28,1.72.96l11.32,27.18c3.24,7.79,2.2,15.18-3.86,21.86-.44.48-.56,1.17-.28,1.76l10.12,21.77c20.23-8.06,32.84-24.84,32.84-48.18,0-25.72-18.93-44.3-49.66-44.3Z"/>
+      </svg>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="#" class="nav-cta" id="install-link">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Add to Chrome — Free
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="var(--wine)"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zm3.2 4.8a.6.6 0 0 0-.84-.04L7.2 8.6l-1.56-1.4a.6.6 0 1 0-.8.88l2 1.8a.6.6 0 0 0 .8-.02l3.56-3.2a.6.6 0 0 0 .04-.84z"/></svg>
+      Free Chrome Extension
+    </div>
+    <h1>Stop scrolling through <span>life stories</span> to find the recipe</h1>
+    <p>Forklo strips food blogs down to just ingredients and instructions. One click and the noise disappears — the recipe stays.</p>
+    <a href="#" class="hero-cta" id="hero-install">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+      Add to Chrome — It's Free
+    </a>
+    <p class="hero-sub">Works on most recipe websites. No account needed.</p>
+  </section>
+
+  <!-- Screenshot -->
+  <section class="showcase">
+    <div class="showcase-frame">
+      <div class="showcase-placeholder">
+        <!-- Replace with actual screenshot: <img src="screenshot-hero.png" alt="Forklo in action"> -->
+        Screenshot of Forklo side panel on a recipe page
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="features-inner">
+      <div class="features-header">
+        <h2>Everything you need, nothing you don't</h2>
+        <p>Built for people who cook, not people who read food blogs.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3>Clean recipe view</h3>
+          <p>Strips away ads, pop-ups, and life stories. Shows just ingredients and step-by-step instructions in a clean side panel.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <h3>Step-by-step tracking</h3>
+          <p>Tap each step to highlight it as you cook. Completed steps fade out and the next one activates automatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>Save your favorites</h3>
+          <p>Build a personal recipe collection right in your browser. No account needed — everything stays local and private.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </div>
+          <h3>Copy recipe</h3>
+          <p>One tap copies the full ingredient list to your clipboard. Paste it into your notes, grocery app, or shopping list.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v10l5-5 5 5 5-5 5 5V4"/></svg>
+          </div>
+          <h3>Ingredient substitutions</h3>
+          <p>Out of an ingredient? Tap the swap icon for smart alternatives — with ratios and notes for each substitution.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          </div>
+          <h3>Print-friendly</h3>
+          <p>Print any recipe in a clean, ink-friendly format. No ads, no clutter — just the recipe on paper.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="how-inner">
+      <h2>How it works</h2>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-step-num">1</div>
+          <h3>Install the extension</h3>
+          <p>Add Forklo to Chrome in one click. No account or sign-up required.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">2</div>
+          <h3>Visit any recipe page</h3>
+          <p>Forklo automatically detects recipes on most major food websites.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">3</div>
+          <h3>Click and cook</h3>
+          <p>The clean recipe opens in a side panel. The original page stays visible — scroll, read, and cook at the same time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>Ready to skip the scroll?</h2>
+    <p>Join thousands of home cooks who just want the recipe.</p>
+    <a href="#" class="hero-cta">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+      Add to Chrome — It's Free
+    </a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>&copy; 2026 Forklo. All rights reserved.</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="mailto:hello@forklo.com">Contact</a>
+    </div>
+  </footer>
+
+</body>
+</html>
